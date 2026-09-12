@@ -543,4 +543,31 @@ export class AdminService {
             message: "User Role Updated Successfully"
         }
     }
+
+    async FetchAuditlogs () {
+        const auditlogs = await this.auditlogModel.find().populate('userId')
+
+        return {
+            success: true,
+            message: "Audit Logs Fetched Success",
+            result: auditlogs
+        }
+    }
+
+    async FetchAuditlogbyID (
+        auditlogID: string
+    ) {
+        const auditlog = await this.auditlogModel.findById(auditlogID).populate('userId')
+
+        if(!auditlog){
+            throw new NotFoundException("The AuditLog Cannot be found")
+        }
+
+        return {
+            success: true,
+            message: "Auditlog Fetched Success",
+            result: auditlog
+        }
+        
+    }
 }

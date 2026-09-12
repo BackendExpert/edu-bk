@@ -82,9 +82,7 @@ export class AuthController {
     RefreshToken(
         @Body() dto: RefreshTokenDto
     ) {
-        return this.authService.refreshToken(
-            dto.refreshToken
-        );
+        return this.authService.refreshToken(dto.refreshToken, dto.institutionId)
     }
 
 

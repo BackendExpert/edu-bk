@@ -21,6 +21,7 @@ import { ABACService } from "src/abac/abac.service";
 import { Policy, PolicySchema } from "src/abac/schema/policy.schema";
 import { Permission, PermissionSchema } from "src/role/schema/permission.schema";
 import { OAuth2Client } from "google-auth-library";
+import { UserInstitution, UserInstitutionSchema } from "./schemas/user-institute.schema";
 
 @Module({
     imports: [
@@ -45,6 +46,7 @@ import { OAuth2Client } from "google-auth-library";
             { name: BackupCode.name, schema: BackupCodeSchema },
             { name: Policy.name, schema: PolicySchema },
             { name: Permission.name, schema: PermissionSchema },
+            { name: UserInstitution.name, schema: UserInstitutionSchema }
         ]),
         AuditLogModule,
     ],

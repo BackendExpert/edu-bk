@@ -4,6 +4,7 @@ import {
     verificationEmailTemplate,
     passwordResetEmailTemplate,
     welcomeEmailTemplate,
+    notificationEmailTemplate,
 } from "./email.template";
 
 @Injectable()
@@ -93,6 +94,25 @@ export class EmailService {
         await this.sendEmail(
             email,
             "Welcome!",
+            html,
+        );
+    }
+
+    async sendNotificationEmail(
+        email: string,
+        name: string,
+        title: string,
+        message: string,
+    ): Promise<void> {
+        const html = notificationEmailTemplate({
+            name,
+            title,
+            message,
+        });
+
+        await this.sendEmail(
+            email,
+            title,
             html,
         );
     }

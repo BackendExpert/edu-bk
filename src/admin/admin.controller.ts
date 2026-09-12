@@ -10,6 +10,7 @@ import { CurrentUser } from "src/common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "src/common/interfaces/authenticated-user.interface";
 import { getClientIp, getLocationFromIp } from "src/common/utils/location.util";
 import type { Request } from "express";
+import { request } from "axios";
 
 @Controller('/api/v1/admin')
 @UseGuards(JwtAuthGuard)
@@ -191,7 +192,7 @@ export class AdminController {
     }
 
     @Patch('/user-role-update/:id')
-    async UserRoleUpdate (
+    async UserRoleUpdate(
         @CurrentUser() user: AuthenticatedUser,
         @Param('id') userId: string,
         @Body('role') role: string,
@@ -202,6 +203,23 @@ export class AdminController {
 
         this.checkSuperAdmin(request)
         return this.adminService.UpdateUserRole(user, userId, role, ipAddress, location)
+    }
+
+    @Get('/fetch-auditlogs')
+    async FetchAuditlog(
+        @Req() request: Request,
+    ) {
+        this.checkSuperAdmin(request)
+        return this.adminService.FetchAuditlogs()
+    }
+
+    @Get('/auditlog-by-id/:id')
+    async FetchAuditlogbyID(
+        @Param('id') audtilogID: string,
+        @Req() request: Request
+    ) {
+        this.checkSuperAdmin(request)
+        return this.adminService.FetchAuditlogbyID(audtilogID)
     }
 
 }

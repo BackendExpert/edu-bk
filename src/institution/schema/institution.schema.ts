@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type InstitutionDocument = HydratedDocument<Institution>;
 
@@ -7,6 +7,12 @@ export type InstitutionDocument = HydratedDocument<Institution>;
 export class Institution {
     @Prop({ required: true, unique: true, trim: true, minlength: 2, maxlength: 150 })
     name!: string;
+
+    @Prop({ type: Types.ObjectId, ref: 'User' })
+    institution_admin!: Types.ObjectId;
+
+    @Prop({ type: Types.ObjectId, ref: 'Plan' })
+    plan!: Types.ObjectId;
 
     @Prop({ required: true, unique: true, lowercase: true, trim: true, minlength: 2, maxlength: 50 })
     code!: string;
@@ -31,7 +37,3 @@ export class Institution {
 }
 
 export const InstitutionSchema = SchemaFactory.createForClass(Institution);
-
-InstitutionSchema.index({ name: 1 });
-InstitutionSchema.index({ code: 1 });
-InstitutionSchema.index({ active: 1 });

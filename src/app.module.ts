@@ -9,6 +9,8 @@ import { AbacModule } from './abac/abac.module';
 import { AdminModule } from './admin/admin.module';
 import { RateLimitModule } from './ratelimit/rate-limit.module';
 import { ProfileModule } from './profile/profile.module';
+import { PlanModule } from './plans/plan.module';
+import { InstitutionModule } from './institution/institution.module';
 
 
 @Module({
@@ -23,6 +25,8 @@ import { ProfileModule } from './profile/profile.module';
     AdminModule,
     RateLimitModule,
     ProfileModule,
+    PlanModule,
+    InstitutionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

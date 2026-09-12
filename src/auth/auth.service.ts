@@ -27,6 +27,7 @@ import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { BackupCode, BackupCodeDocument } from "./schemas/backup-code.schema";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { GoogleLoginDto } from "./dto/google-login.dto";
+import { UserInstitution, UserInstitutionDocument } from "./schemas/user-institute.schema";
 
 @Injectable()
 export class AuthService {
@@ -46,14 +47,12 @@ export class AuthService {
         @InjectModel(PasswordReset.name)
         private readonly passwordresetModel: Model<PasswordResetDocument>,
 
-        @InjectModel(Otp.name)
-        private readonly otpModel: Model<OtpDocument>,
-
         @InjectModel(Profile.name)
         private readonly profileModel: Model<ProfileDocument>,
 
-        @InjectModel(BackupCode.name)
-        private readonly backupcodeModel: Model<BackupCodeDocument>,
+        @InjectModel(UserInstitution.name)
+        private readonly userinstitutionModel: Model<UserInstitutionDocument>,
+
 
         private readonly jwtService: JwtService,
         private readonly config: ConfigService,
@@ -82,6 +81,10 @@ export class AuthService {
 
     private generateBackupCode(): string {
         return crypto.randomBytes(5).toString('hex').toUpperCase();
+    }
+
+    private requiresInstitution(role: string): boolean {
+        return !["SUPER_ADMIN", "GUEST", "INSTITUTE_ADMIN", "SYSTEM_STAFF"].includes(role);
     }
 
     async Registation(
@@ -247,6 +250,45 @@ export class AuthService {
 
         const sessionId = new Types.ObjectId().toString();
 
+        const rolename = await this.roleModel.findById(user.roleId);
+
+        if (!rolename) {
+            throw new NotFoundException("Role Cannot be Found");
+        }
+
+        let institutionId: Types.ObjectId | null = null;
+
+        if (this.requiresInstitution(rolename.name)) {
+            const institutions = await this.userinstitutionModel.find({
+                userId: user._id,
+                status: "ACTIVE",
+            }).populate("institutionId");
+
+            if (institutions.length === 0) {
+                throw new BadRequestException("No active institution is assigned to this account");
+            }
+
+            if (dto.institutionId) {
+                const selectedInstitution = institutions.find(
+                    (item) => item.institutionId.toString() === dto.institutionId
+                );
+
+                if (!selectedInstitution) {
+                    throw new BadRequestException("You do not have access to this institution");
+                }
+
+                institutionId = selectedInstitution.institutionId as Types.ObjectId;
+            } else if (institutions.length === 1) {
+                institutionId = institutions[0].institutionId as Types.ObjectId;
+            } else {
+                return {
+                    success: true,
+                    requiresInstitutionSelection: true,
+                    institutions: institutions.map((item) => item.institutionId),
+                };
+            }
+        }
+
         const refreshToken = this.genarteToken();
 
         const refreshTokenHash = this.hashtoken(refreshToken);
@@ -269,9 +311,10 @@ export class AuthService {
             id: user._id,
             email: user.email,
             roleId: user.roleId,
-            role: role?.name,
+            role: rolename.name,
+            institutionId,
             accountStatus: user.accountStatus,
-            emailVerified: true,
+            emailVerified: user.emailVerified,
         };
 
         const accessToken = await this.jwtService.signAsync({
@@ -549,6 +592,44 @@ export class AuthService {
 
         const sessionId = new Types.ObjectId().toString();
 
+        const rolename = await this.roleModel.findById(user.roleId);
+
+        if (!rolename) {
+            throw new NotFoundException("Role Cannot be Found");
+        }
+        let institutionId: Types.ObjectId | null = null;
+
+        if (this.requiresInstitution(rolename.name)) {
+            const institutions = await this.userinstitutionModel.find({
+                userId: user._id,
+                status: "ACTIVE",
+            }).populate("institutionId");
+
+            if (institutions.length === 0) {
+                throw new BadRequestException("No active institution is assigned to this account");
+            }
+
+            if (dto.institutionId) {
+                const selectedInstitution = institutions.find(
+                    (item) => item.institutionId.toString() === dto.institutionId
+                );
+
+                if (!selectedInstitution) {
+                    throw new BadRequestException("You do not have access to this institution");
+                }
+
+                institutionId = selectedInstitution.institutionId as Types.ObjectId;
+            } else if (institutions.length === 1) {
+                institutionId = institutions[0].institutionId as Types.ObjectId;
+            } else {
+                return {
+                    success: true,
+                    requiresInstitutionSelection: true,
+                    institutions: institutions.map((item) => item.institutionId),
+                };
+            }
+        }
+
         const refreshToken = this.genarteToken();
 
         const refreshTokenHash = this.hashtoken(refreshToken);
@@ -566,17 +647,12 @@ export class AuthService {
             lastUsedAt: new Date(),
         });
 
-        const rolename = await this.roleModel.findById(user.roleId);
-
-        if (!rolename) {
-            throw new NotFoundException("Role Cannot be Found");
-        }
-
         const userData = {
             id: user._id,
             email: user.email,
             roleId: user.roleId,
             role: rolename.name,
+            institutionId,
             accountStatus: user.accountStatus,
             emailVerified: user.emailVerified,
         };
@@ -620,7 +696,7 @@ export class AuthService {
         };
     }
 
-    async refreshToken(refresh_Token: string) {
+    async refreshToken(refresh_Token: string, institutionId?: string) {
         const refreshTokenHash = this.hashtoken(refresh_Token);
 
         const session = await this.sessionModel.findOne({
@@ -676,6 +752,33 @@ export class AuthService {
             throw new NotFoundException("Role Cannot be Found");
         }
 
+        let selectedInstitutionId: Types.ObjectId | null = null;
+
+        if (this.requiresInstitution(rolename.name)) {
+            const institutions = await this.userinstitutionModel.find({
+                userId: user._id,
+                status: "ACTIVE",
+            }).populate("institutionId");
+
+            if (institutions.length === 0) {
+                throw new BadRequestException("No active institution is assigned to this account");
+            }
+
+            if (!institutionId) {
+                throw new BadRequestException("Institution selection is required");
+            }
+
+            const selectedInstitution = institutions.find(
+                (item) => item.institutionId.toString() === institutionId
+            );
+
+            if (!selectedInstitution) {
+                throw new BadRequestException("You do not have access to this institution");
+            }
+
+            selectedInstitutionId = selectedInstitution.institutionId as Types.ObjectId;
+        }
+
         const newRefreshToken = this.genarteToken();
         const newRefreshTokenHash = this.hashtoken(
             newRefreshToken
@@ -691,6 +794,7 @@ export class AuthService {
             email: user.email,
             roleId: user.roleId,
             role: rolename.name,
+            institutionId: selectedInstitutionId,
             accountStatus: user.accountStatus,
             emailVerified: user.emailVerified,
         };

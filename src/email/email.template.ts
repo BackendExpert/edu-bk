@@ -12,6 +12,12 @@ interface WelcomeEmailTemplateProps {
     name: string;
 }
 
+interface NotificationEmailTemplateProps {
+    name: string;
+    title: string;
+    message: string;
+}
+
 const emailLayout = (
     title: string,
     content: string,
@@ -277,6 +283,56 @@ export const welcomeEmailTemplate = ({
                     Get Started
                 </a>
             </div>
+        `,
+    );
+};
+
+export const notificationEmailTemplate = ({
+    name,
+    title,
+    message,
+}: NotificationEmailTemplateProps): string => {
+    return emailLayout(
+        title,
+        `
+            <h2
+                style="
+                    margin-top: 0;
+                    color: #111827;
+                "
+            >
+                ${title}
+            </h2>
+
+            <p>
+                Hello ${name},
+            </p>
+
+            <p>
+                ${message}
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a
+                    href="${process.env.FRONTEND_URL}"
+                    style="
+                        display: inline-block;
+                        padding: 13px 24px;
+                        background-color: #111827;
+                        color: #ffffff;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                    "
+                >
+                    View Application
+                </a>
+            </div>
+
+            <p style="font-size: 14px; color: #6b7280;">
+                You are receiving this email because there is a new
+                notification related to your account.
+            </p>
         `,
     );
 };

@@ -8,4 +8,8 @@ export class GoogleLoginDto {
     @IsOptional()
     @IsString()
     deviceId?: string;
+
+    @IsOptional()
+    @IsString()
+    institutionId?: string;
 }

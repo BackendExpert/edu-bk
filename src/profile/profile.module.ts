@@ -14,7 +14,6 @@ import { Profile, ProfileSchema } from './schema/profile.schema';
 @Module({
     imports: [
         MongooseModule.forFeature([
-            { name: Role.name, schema: RoleSchema },
             { name: User.name, schema: UserSchema },
             { name: Role.name, schema: RoleSchema },
             { name: AuditLog.name, schema: AuditLogSchema },
